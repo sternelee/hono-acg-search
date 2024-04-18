@@ -2,13 +2,13 @@ import { Hono } from "hono";
 import { prettyJSON } from "hono/pretty-json";
 import { HTTPException } from "hono/http-exception";
 import { cache } from "hono/cache";
-import { parseFeed } from "htmlparser2";
-import { ARG_SEARCH_MAP, IARG_FROM } from "./config"
+import { parseFeed } from "./utils";
+import { ARG_SEARCH_MAP, IARG_FROM } from "./config";
 
 const app = new Hono();
 
 app.get("/", (c) => {
-  return c.text("Hello Hono!");
+  return c.text("Hello ACG fans!");
 });
 
 // Use prettyJSON middleware for all routes
@@ -41,13 +41,22 @@ app.onError((err, c) => {
   return c.json({ status: "failure", message: err.message });
 });
 
-app.post('/search', async (c) => {
-  const { from = 'acg', keyword } = await c.req.json() as { from: IARG_FROM, keyword: string }
-  const url = ARG_SEARCH_MAP[from] ? ARG_SEARCH_MAP[from].href : ARG_SEARCH_MAP.acg.href
-  const keywords = keyword.replaceAll(' ', '+')
-  const xml = await fetch(url + keywords).then(res => res.text())
-  const res = parseFeed(xml);
-  return c.json(res)
-})
+app.post("/search", async (c) => {
+  const { from = "acg", keyword } = (await c.req.json()) as {
+    from: IARG_FROM;
+    keyword: string;
+  };
+  const url = ARG_SEARCH_MAP[from]
+    ? ARG_SEARCH_MAP[from].href
+    : ARG_SEARCH_MAP.acg.href;
+  const keywords = keyword.replaceAll(" ", "+");
+  console.log(url + keywords);
+  const xml = await fetch(url + keywords).then((res) => res.text());
+  if (xml) {
+    const res = parseFeed(xml);
+    return c.json(res);
+  }
+  return c.json({});
+});
 
 export default app;

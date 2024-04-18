@@ -1,5 +1,5 @@
-export const SITE_ARG = "https://acg.rip";
-export const SITE_DMHY = "https://share.dmhy.org";
+export const SITE_ARG = "https://acg.rip"; // rss 返回 torrent 种子链接
+export const SITE_DMHY = "https://share.dmhy.org"; // rss 返回 磁力链接
 export const SITE_MIKANANI = "https://mikanani.me";
 export const SITE_BANGUMI = "https://bangumi.moe/"; // TODO: rss搜索规则
 
@@ -24,7 +24,7 @@ export const ARG_SEARCH_MAP = {
     name: "动漫花园",
     href: SITE_DMHY + "/topics/rss/rss.xml?keyword=",
   },
-  bangumi: {
+  mikanani: {
     name: "密柑计划",
     href: SITE_MIKANANI + "/RSS/Search?searchstr=",
   },
