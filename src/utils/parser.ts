@@ -10,22 +10,16 @@ import {
 } from "domutils";
 import type { AnyNode, Element } from "domhandler";
 
-export interface IItem {
-  title: string;
-  description: string;
-  pubDate: string;
-  link: string;
-  guid: string;
-  torrent: string;
-}
+export type TorrentFeedItem = FeedItem & {
+  guid?: string;
+  torrent?: string;
+};
 
-export interface IRSS {
-  title: string;
-  description: string;
-  link: string;
-  ttl: number;
-  items: IItem[];
-}
+type FeedOmit = Omit<Feed, "items">;
+
+export type TorrentFeed = FeedOmit & {
+  items: TorrentFeedItem[];
+};
 
 function getOneElement(
   tagName: string | ((name: string) => boolean),
@@ -51,9 +45,9 @@ function fetchElm(
   where: AnyNode | AnyNode[],
   recurse = false,
 ): string {
-  const elements = getElementsByTagName(tagName, where, recurse, 1)
-  const el = elements[0]
-  if (el && el.name === 'enclosure' && el.attribs) return el.attribs['url']
+  const elements = getElementsByTagName(tagName, where, recurse, 1);
+  const el = elements[0];
+  if (el && el.name === "enclosure" && el.attribs) return el.attribs["url"];
   return textContent(elements).trim();
 }
 
@@ -136,11 +130,11 @@ function addConditionally<T>(
 function getAtomFeed(feedRoot: Element) {
   const childs = feedRoot.children;
 
-  const feed: Feed = {
+  const feed: TorrentFeed = {
     type: "atom",
     items: getElementsByTagName("entry", childs).map((item) => {
       const { children } = item;
-      const entry: FeedItem = { media: getMediaElements(children) };
+      const entry: TorrentFeedItem = { media: getMediaElements(children) };
 
       addConditionally(entry, "id", "id", children);
       addConditionally(entry, "title", "title", children);
@@ -192,27 +186,24 @@ function getAtomFeed(feedRoot: Element) {
 function getRssFeed(feedRoot: Element) {
   const childs = getOneElement("channel", feedRoot.children)?.children ?? [];
 
-  const feed: Feed = {
+  const feed: TorrentFeed = {
     type: feedRoot.name.substr(0, 3),
     id: "",
     items: getElementsByTagName("item", feedRoot.children).map(
       (item: Element) => {
         const { children } = item;
-        const entry: FeedItem & {
-          guid?: string
-          torrent?: string
-        } = { media: getMediaElements(children) };
+        const entry: TorrentFeedItem = { media: getMediaElements(children) };
         addConditionally(entry, "id", "guid", children);
         addConditionally(entry, "title", "title", children);
         addConditionally(entry, "link", "link", children);
         addConditionally(entry, "description", "description", children);
-        const guid = fetchElm("guid", children)
-        const torrent = fetchElm("enclosure", children)
+        const guid = fetchElm("guid", children);
+        const torrent = fetchElm("enclosure", children);
         if (guid) {
-          entry.guid = guid
+          entry.guid = guid;
         }
         if (torrent) {
-          entry.torrent = torrent
+          entry.torrent = torrent;
         }
         const pubDate =
           fetchElm("pubDate", children) || fetchElm("dc:date", children);
@@ -237,7 +228,7 @@ function getRssFeed(feedRoot: Element) {
   return feed;
 }
 
-function getFeed(doc: AnyNode[]): Feed | null {
+function getFeed(doc: AnyNode[]): TorrentFeed | null {
   const feedRoot = getOneElement(isValidFeed, doc);
 
   return !feedRoot
@@ -252,6 +243,6 @@ const parseFeedDefaultOptions = { xmlMode: true };
 export function parseFeed(
   feed: string,
   options: Options = parseFeedDefaultOptions,
-): Feed | null {
+): TorrentFeed | null {
   return getFeed(parseDOM(feed, options));
 }
